@@ -1,0 +1,21 @@
+{
+  "name": "13_simple-backend",
+  "version": "1.0.0",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env app.js",
+    "start": "node --env-file-if-exists=.env app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "nodemailer": "^8.0.5",
+    "stripe": "^22.0.2"
+  }
+}

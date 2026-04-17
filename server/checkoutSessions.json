@@ -1,0 +1,42 @@
+[
+  {
+    "checkoutSessionId": "cs_test_b1L0d5Rm68o2n0Y90dnKORnJ2VJU5d94wCQDOJqRXgx8NMCz8yysEJBGYt",
+    "courses": [
+      "64fc0a6d2f8a5300291f7e63",
+      "64f9ef2b7a3c450018a9d6b2"
+    ],
+    "userEmail": "raquib@raquib.com",
+    "paymentStatus": "paid"
+  },
+  {
+    "checkoutSessionId": "cs_test_a1az40Nz0KXj2Q5Gt8cq8awUzoGIb3tULWTo8sYKXbR9DtHGsPEW7thuCH",
+    "courses": [
+      "64fa1c9e3b7d92001c4a7f21"
+    ],
+    "userEmail": "raquib@raquib.com",
+    "paymentStatus": "paid"
+  },
+  {
+    "checkoutSessionId": "cs_test_a1az40Nz0KXj2Q5Gt8cq8awUzoGIb3tULWTo8sYKXbR9DtHGsPEW7thuCH",
+    "courses": [
+      "64fa1c9e3b7d92001c4a7f21"
+    ],
+    "userEmail": "raquib@raquib.com",
+    "paymentStatus": "paid"
+  },
+  {
+    "checkoutSessionId": "cs_test_b15DFjc1bEG0C6v2DfpiyRwf2f1sd9XZ3a4wrNLTqW58Vr5y7JGNVevcaw",
+    "courses": [
+      "64fa1c9e3b7d92001c4a7f21",
+      "64fb2d7a9f4c11002e6d3c48"
+    ],
+    "userEmail": "raquib@raquib.com",
+    "paymentStatus": "paid"
+  },
+  {
+    "checkoutSessionId": "cs_test_b15DFjc1bEG0C6v2DfpiyRwf2f1sd9XZ3a4wrNLTqW58Vr5y7JGNVevcaw",
+    "courses": [],
+    "userEmail": "raquib@raquib.com",
+    "paymentStatus": "paid"
+  }
+]
