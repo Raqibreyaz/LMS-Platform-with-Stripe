@@ -54,16 +54,8 @@ export default function CheckoutProcess({ onClose, totalAmount }) {
   const doPayment = async () => {
     setLoading(true);
     setError("");
-    try {
-      // Create order first
-      const { data } = await api.post("/create-checkout");
-      if (data.error) throw new Error(data.error);
-      if (data.url) window.location.href = data.url;
-    } catch (err) {
-      setError(err.message || err.response?.data?.error || "Error in payment!");
-    } finally {
-      setLoading(false);
-    }
+
+    navigate('/checkout')
   };
 
   useEffect(() => {

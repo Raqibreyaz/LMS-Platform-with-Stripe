@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import Navbar from "./Navbar";
 import Home from "./Home";
 import Cart from "./Cart";
-import Callback from './Callback'
+import { CheckoutForm, Return } from "./Stripe";
 
 export default function App() {
   return (
@@ -11,7 +11,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/cart" element={<Cart />} />
-        <Route path="/callback" element={<Callback />} />
+        <Route path="/checkout" element={<CheckoutForm />} />
+        <Route path="/return" element={<Return />} />
       </Routes>
     </div>
   );

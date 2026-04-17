@@ -249,33 +249,39 @@ app.post("/create-checkout", async (req, res) => {
     session.cart.includes(course.id),
   );
 
-  const checkoutSession = await stripeClient.checkout.sessions.create({
-    success_url:
-      "http://localhost:5173/callback?session_id={CHECKOUT_SESSION_ID}",
-    customer_email: session.userEmail,
-    shipping_address_collection: {
-      allowed_countries: ["IN", "PK", "BD", "NP"],
-    },
-    metadata: {
-      userName: session.userName,
-      userContact: session.userMobile,
-      noOfCourses: cartCourses.length,
-    },
-    line_items: cartCourses.map((course) => ({
-      quantity: 1,
-      price_data: {
-        currency: "USD",
-        unit_amount: course.price * 100,
-        product_data: {
-          name: course.name,
-          images: [course.image],
-        },
+  try {
+    const checkoutSession = await stripeClient.checkout.sessions.create({
+      return_url:
+        "http://localhost:5173/return?session_id={CHECKOUT_SESSION_ID}",
+      customer_email: session.userEmail,
+      shipping_address_collection: {
+        allowed_countries: ["IN", "PK", "BD", "NP"],
       },
-    })),
-    mode: "payment",
-  });
+      metadata: {
+        userName: session.userName,
+        userContact: session.userMobile,
+        noOfCourses: cartCourses.length,
+      },
+      line_items: cartCourses.map((course) => ({
+        quantity: 1,
+        price_data: {
+          currency: "USD",
+          unit_amount: course.price * 100,
+          product_data: {
+            name: course.name,
+            images: [course.image],
+          },
+        },
+      })),
+      mode: "payment",
+      ui_mode: "embedded_page",
+    });
 
-  res.json({ url: checkoutSession.url });
+    res.json({ clientSecret: checkoutSession.client_secret });
+  } catch (error) {
+    console.error("Stripe Error:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.post("/complete-checkout/:checkoutSessionId", async (req, res) => {
@@ -306,11 +312,18 @@ app.post("/complete-checkout/:checkoutSessionId", async (req, res) => {
     session.cart = [];
     await writeFile(SESSIONS_FILE, JSON.stringify(sessions, null, 2));
 
-    return res.json({ message: "Checkout Completed", status: "success" });
+    return res.json({
+      message: "Checkout Completed",
+      status: checkoutSession.status,
+    });
   }
-  res.status(400).json({ error: "Checkout not completed", status: "failed" });
+  res
+    .status(400)
+    .json({ error: "Checkout not completed", status: checkoutSession.status });
 });
 
-app.listen(4000, () => {
+app.listen(8080, (error) => {
+  if (error) return console.log(error);
+
   console.log("Server started");
 });
