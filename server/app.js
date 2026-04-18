@@ -40,6 +40,11 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+// throttling requests to avoid race condition
+app.use((req, res, next) => {
+  setTimeout(() => next(), 3 * 1000);
+});
+
 // session middleware
 app.use(async (req, res, next) => {
   // add session if not exists
@@ -284,6 +289,36 @@ app.post("/create-checkout", async (req, res) => {
   }
 });
 
+app.post("/hello-world", async (req, res, next) => {
+  console.log("stripe called this webhook:", req.body?.data);
+
+  if (
+    req.body?.data?.object &&
+    req.body.data.object.object === "checkout.session"
+  ) {
+    const paymentStatus = req.body?.data?.object?.payment_status;
+    const checkoutSessionId = req.body?.data?.object?.id;
+    const customerEmail = req.body.data.object.customer_email;
+
+    if (paymentStatus === "paid") {
+      checkoutSessions.push({
+        checkoutSessionId,
+        courses: [],
+        paymentStatus,
+        updatedByWebhook: true,
+        userEmail: customerEmail,
+      });
+
+      await writeFile(
+        CHECKOUT_SESSIONS_FILE,
+        JSON.stringify(checkoutSessions, null, 2),
+      );
+    }
+  }
+
+  res.json({ message: "hello stripe!" });
+});
+
 app.post("/complete-checkout/:checkoutSessionId", async (req, res) => {
   const sessionId = req.cookies.session;
   const session = sessions.find((session) => session.id === sessionId);
@@ -297,12 +332,27 @@ app.post("/complete-checkout/:checkoutSessionId", async (req, res) => {
   }
 
   if (checkoutSession.payment_status === "paid") {
-    checkoutSessions.push({
-      checkoutSessionId: checkoutSessionId,
-      courses: [...session.cart],
-      userEmail: session.userEmail,
-      paymentStatus: "paid",
-    });
+    let checkoutSession = checkoutSessions.find(
+      (checkoutSession) =>
+        checkoutSession.checkoutSessionId === checkoutSessionId,
+    );
+
+    // create a checkout session object if not exist yet
+    if (!checkoutSession)
+      checkoutSession = {
+        checkoutSessionId: checkoutSessionId,
+        paymentStatus: "paid",
+      };
+
+    // update necessary fields
+    checkoutSession.courses = [...checkoutSession.courses, ...session.cart];
+    // checkoutSession.userEmail = session.userEmail;
+    checkoutSession.updatedByFrontend = true;
+
+    // update the in-memory array
+    if (!checkoutSession) checkoutSessions.push(checkoutSession);
+
+    // write to DB
     await writeFile(
       CHECKOUT_SESSIONS_FILE,
       JSON.stringify(checkoutSessions, null, 2),
@@ -327,3 +377,84 @@ app.listen(8080, (error) => {
 
   console.log("Server started");
 });
+/*
+
+stripe called this webhook: {
+  id: 'evt_1TNWa4FHDoQVaRBKbYnTBMT5',
+  object: 'event',
+  api_version: '2026-03-25.dahlia',
+  created: 1776509912,
+  data: {
+    object: {
+      id: 'cs_test_a1iP4B8q5cceNOkpSMb3z7TqUdug2ub5UC6OHw6uX7QwHruwK4JkwuzsWN',
+      object: 'checkout.session',
+      adaptive_pricing: [Object],
+      after_expiration: null,
+      allow_promotion_codes: null,
+      amount_subtotal: 299900,
+      amount_total: 299900,
+      automatic_tax: [Object],
+      billing_address_collection: null,
+      branding_settings: [Object],
+      cancel_url: null,
+      client_reference_id: null,
+      client_secret: null,
+      collected_information: [Object],
+      consent: null,
+      consent_collection: null,
+      created: 1776509891,
+      currency: 'usd',
+      currency_conversion: null,
+      custom_fields: [],
+      custom_text: [Object],
+      customer: null,
+      customer_account: null,
+      customer_creation: 'if_required',
+      customer_details: [Object],
+      customer_email: 'raquib@raquib.com',
+      discounts: [],
+      expires_at: 1776596291,
+      integration_identifier: null,
+      invoice: null,
+      invoice_creation: [Object],
+      livemode: false,
+      locale: null,
+      managed_payments: [Object],
+      metadata: [Object],
+      mode: 'payment',
+      origin_context: null,
+      payment_intent: 'pi_3TNWa2FHDoQVaRBK0X7O2jCe',
+      payment_link: null,
+      payment_method_collection: 'if_required',
+      payment_method_configuration_details: [Object],
+      payment_method_options: [Object],
+      payment_method_types: [Array],
+      payment_status: 'paid',
+      permissions: null,
+      phone_number_collection: [Object],
+      presentment_details: [Object],
+      recovered_from: null,
+      redirect_on_completion: 'always',
+      return_url: 'http://localhost:5173/return?session_id={CHECKOUT_SESSION_ID}',
+      saved_payment_method_options: null,
+      setup_intent: null,
+      shipping_address_collection: [Object],
+      shipping_cost: null,
+      shipping_options: [],
+      status: 'complete',
+      submit_type: null,
+      subscription: null,
+      success_url: null,
+      total_details: [Object],
+      ui_mode: 'embedded_page',
+      url: null,
+      wallet_options: null
+    }
+  },
+  livemode: false,
+  pending_webhooks: 1,
+  request: { id: null, idempotency_key: null },
+  type: 'checkout.session.completed'
+}
+
+*/

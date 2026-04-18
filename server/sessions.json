@@ -7,9 +7,16 @@
     "userMobile": "9876543211",
     "userName": "Raquib",
     "purchasedCourses": [
-      "64fb2d7a9f4c11002e6d3c48",
-      "64fa1c9e3b7d92001c4a7f21",
-      "64fc0a6d2f8a5300291f7e63"
+      "64f8d1a03b5c76000b1a8d95"
     ]
+  },
+  {
+    "cart": [],
+    "id": "9f2b3dd6-94b1-489f-8679-e31be1ee18dc",
+    "ip": "::ffff:127.0.0.1",
+    "userEmail": null,
+    "userMobile": null,
+    "userName": null,
+    "purchasedCourses": []
   }
 ]

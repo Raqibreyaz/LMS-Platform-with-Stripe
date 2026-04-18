@@ -1,8 +1,8 @@
-- use embedded forms for better UX for stripe payments
-- integrate stripe's webhook
 - verify stripe's webhook signature
 - debugging the retry behavior of stripe's webhooks
 
 DONE
 - learning payment objects in stripe
 - migrate the project to stripe
+- use embedded forms for better UX for stripe payments
+- integrate stripe's webhook
