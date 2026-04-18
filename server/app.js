@@ -16,6 +16,24 @@ const SESSIONS_FILE = "./sessions.json";
 const OTPS_FILE = "./otps.json";
 
 const stripeSecret = process.env.STRIPE_API_SECRET;
+const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const stripeWebhookIps = [
+  "3.18.12.63",
+  "3.69.109.8",
+  "3.120.168.93",
+  "3.130.192.231",
+  "13.235.14.237",
+  "13.235.122.149",
+  "18.211.135.69",
+  "35.154.171.200",
+  "35.157.207.129",
+  "52.15.183.38",
+  "54.88.130.119",
+  "54.88.130.237",
+  "54.187.174.169",
+  "54.187.205.235",
+  "54.187.216.72",
+];
 
 // Create a transporter using SMTP
 const transporter = Nodemailer.createTransport({
@@ -37,6 +55,64 @@ app.use(
     credentials: true,
   }),
 );
+
+app.post(
+  "/hello-world",
+  (req, res, next) => {
+    // ngrok wraps the ip so take the original ip
+    const stripeIp = req.headers["x-forwarded-for"] || "random_string";
+
+    if (!stripeWebhookIps.includes(stripeIp)) {
+      console.log("returning as ip didnt match!");
+      return res
+        .status(400)
+        .json({ error: "You are not allowed to request here!" });
+    }
+
+    next();
+  },
+  express.raw({ type: "application/json" }),
+  async (req, res, next) => {
+    console.log(req.socket.remoteAddress);
+    console.log(req.ip);
+
+    let event = null;
+    // signature verification, so that we only allow stripe
+    try {
+      const webhookSignature = req.headers["stripe-signature"];
+      event = await stripeClient.webhooks.constructEventAsync(
+        req.body,
+        webhookSignature,
+        stripeWebhookSecret,
+      );
+    } catch (error) {
+      console.log(error);
+      return res.status(400).json({ error: "Invalid Signature!" });
+    }
+
+    const paymentStatus = event.data?.object.payment_status;
+    const checkoutSessionId = event.data?.object?.id;
+    const customerEmail = event.data.object.customer_email;
+
+    if (paymentStatus === "paid") {
+      checkoutSessions.push({
+        checkoutSessionId,
+        courses: [],
+        paymentStatus,
+        updatedByWebhook: true,
+        userEmail: customerEmail,
+      });
+
+      await writeFile(
+        CHECKOUT_SESSIONS_FILE,
+        JSON.stringify(checkoutSessions, null, 2),
+      );
+    }
+
+    res.json({ message: "hello stripe!" });
+  },
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -289,36 +365,6 @@ app.post("/create-checkout", async (req, res) => {
   }
 });
 
-app.post("/hello-world", async (req, res, next) => {
-  console.log("stripe called this webhook:", req.body?.data);
-
-  if (
-    req.body?.data?.object &&
-    req.body.data.object.object === "checkout.session"
-  ) {
-    const paymentStatus = req.body?.data?.object?.payment_status;
-    const checkoutSessionId = req.body?.data?.object?.id;
-    const customerEmail = req.body.data.object.customer_email;
-
-    if (paymentStatus === "paid") {
-      checkoutSessions.push({
-        checkoutSessionId,
-        courses: [],
-        paymentStatus,
-        updatedByWebhook: true,
-        userEmail: customerEmail,
-      });
-
-      await writeFile(
-        CHECKOUT_SESSIONS_FILE,
-        JSON.stringify(checkoutSessions, null, 2),
-      );
-    }
-  }
-
-  res.json({ message: "hello stripe!" });
-});
-
 app.post("/complete-checkout/:checkoutSessionId", async (req, res) => {
   const sessionId = req.cookies.session;
   const session = sessions.find((session) => session.id === sessionId);
@@ -345,7 +391,10 @@ app.post("/complete-checkout/:checkoutSessionId", async (req, res) => {
       };
 
     // update necessary fields
-    checkoutSession.courses = [...checkoutSession.courses, ...session.cart];
+    checkoutSession.courses = [
+      ...(checkoutSession.courses ?? []),
+      ...session.cart,
+    ];
     // checkoutSession.userEmail = session.userEmail;
     checkoutSession.updatedByFrontend = true;
 

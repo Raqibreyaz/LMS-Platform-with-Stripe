@@ -1,8 +1,8 @@
 [
   {
-    "checkoutSessionId": "cs_test_a1MvBEgo88Fn1ot01qr8jSxU1lPqsnYVtioutJlRFSF203lOH2cszhxdZk",
+    "checkoutSessionId": "cs_test_a1FflxeB2LKYSGvvh8dWiRTFvM1ka59IgcanQrfv5cOnLOJnYWuw9fpsYD",
     "courses": [
-      "64f8d1a03b5c76000b1a8d95"
+      "64fbd2c14e6f82001f2b5a7c"
     ],
     "paymentStatus": "paid",
     "updatedByWebhook": true,
